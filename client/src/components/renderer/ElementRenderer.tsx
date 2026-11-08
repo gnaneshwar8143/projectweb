@@ -1,5 +1,7 @@
 import React, { type JSX } from 'react';
 import type { WebElement, ElementStyles } from '../../types';
+import { useEditorStore } from '../../store/editorStore';
+import { createElement } from './elementFactory';
 
 // Convert our ElementStyles object to a React CSSProperties object
 // Injects CSS custom property fallbacks for theme-aware values
@@ -140,23 +142,57 @@ export function ElementRenderer({
     case 'spacer':
       return <div {...baseProps} />;
 
-    case 'container':
+    case 'container': {
+      const children = element.children ?? [];
+      const { selectedElementId, selectElement } = useEditorStore.getState();
       return (
         <div {...baseProps}>
-          {element.children?.map(child => (
-            <ElementRenderer
-              key={child.id}
-              element={child}
-              isSelected={false}
-              isHovered={false}
-              onClick={(e) => { e.stopPropagation(); onClick(e); }}
-              onMouseEnter={onMouseEnter}
-              onMouseLeave={onMouseLeave}
-              previewMode={previewMode}
-            />
-          ))}
+          {children.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-4 border border-dashed border-surface-600/40 rounded-lg text-center bg-surface-800/10 hover:bg-surface-800/20 transition-all w-full min-h-[90px]">
+              <p className="text-[11px] text-surface-400 mb-2 font-medium">Empty Column / Container</p>
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {(['heading', 'paragraph', 'button', 'image'] as const).map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newEl = createElement(t);
+                      useEditorStore.getState().pushHistory(`Add ${t} to column`);
+                      useEditorStore.getState().addElementToContainer(element.id, newEl);
+                    }}
+                    className="btn-secondary text-[10px] py-0.5 px-2 capitalize flex items-center gap-1 hover:border-brand-500 hover:text-brand-300"
+                  >
+                    + {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            children.map(child => (
+              <ElementRenderer
+                key={child.id}
+                element={child}
+                isSelected={selectedElementId === child.id}
+                isHovered={false}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectElement(null, child.id);
+                }}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
+                onContentChange={(val) => {
+                  useEditorStore.getState().updateElement('', child.id, {
+                    ...(child.type === 'button' ? { text: val } : { content: val })
+                  });
+                }}
+                previewMode={previewMode}
+              />
+            ))
+          )}
         </div>
       );
+    }
 
     case 'navbar':
       return (

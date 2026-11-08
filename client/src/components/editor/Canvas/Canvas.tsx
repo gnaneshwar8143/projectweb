@@ -11,7 +11,7 @@ import {
 import type { DragStartEvent, DragEndEvent, Active } from '@dnd-kit/core';
 import {
   SortableContext,
-  verticalListSortingStrategy,
+  rectSortingStrategy,
   useSortable,
   arrayMove,
 } from '@dnd-kit/sortable';
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore';
 import { ElementRenderer } from '../../renderer/ElementRenderer';
-import { createElement, createSection } from '../../renderer/elementFactory';
+import { createElement, createSection, createColumns } from '../../renderer/elementFactory';
 import type { Section, WebElement, ElementType } from '../../../types';
 
 // ─── Types for drag data payloads ─────────────────────────────────────────────
@@ -30,6 +30,7 @@ interface SidebarDragData {
   fromSidebar: true;
   elementType: ElementType;
   label: string;
+  variant?: '2col' | '3col';
 }
 interface CanvasDragData {
   fromSidebar: false;
@@ -223,7 +224,7 @@ function SectionRenderer({
       <div style={section.styles as React.CSSProperties}>
         <SortableContext
           items={section.elements.map(e => e.id)}
-          strategy={verticalListSortingStrategy}
+          strategy={rectSortingStrategy}
         >
           {section.elements.length === 0 ? (
             <div
@@ -440,6 +441,7 @@ export function EditorDndProvider({ children }: { children: (props: {
     type: 'sidebar' | 'element';
     elementType?: ElementType;
     label?: string;
+    variant?: '2col' | '3col';
     sectionId?: string;
     elementId?: string;
   } | null>(null);
@@ -483,7 +485,12 @@ export function EditorDndProvider({ children }: { children: (props: {
     const data = event.active.data.current as DragData | undefined;
     setActiveItem(event.active);
     if (data?.fromSidebar) {
-      activeDragRef.current = { type: 'sidebar', elementType: data.elementType, label: data.label };
+      activeDragRef.current = {
+        type: 'sidebar',
+        elementType: data.elementType,
+        label: data.label,
+        variant: data.variant,
+      };
     } else if (data && !data.fromSidebar) {
       activeDragRef.current = { type: 'element', sectionId: data.sectionId, elementId: data.elementId };
     }
@@ -523,11 +530,18 @@ export function EditorDndProvider({ children }: { children: (props: {
 
       if (!overId) return; // dropped outside — cancel
 
+      const elType = drag.elementType;
+      const makeNewElement = () => {
+        if (elType === 'container' && drag.variant === '2col') return createColumns(2);
+        if (elType === 'container' && drag.variant === '3col') return createColumns(3);
+        return createElement(elType);
+      };
+
       // Dropped on empty canvas → create new section
       if (overId === 'canvas-empty') {
         const section = createSection('Section 1');
-        const el = createElement(drag.elementType);
-        pushHistory(`Add ${drag.elementType}`);
+        const el = makeNewElement();
+        pushHistory(`Add ${drag.label ?? drag.elementType}`);
         addSection(section);
         // Use setTimeout to ensure section is in store before adding element
         setTimeout(() => addElement(section.id, el), 0);
@@ -545,15 +559,15 @@ export function EditorDndProvider({ children }: { children: (props: {
       // Still no section → create one
       if (!targetSectionId) {
         const section = createSection(`Section ${page.sections.length + 1}`);
-        const el = createElement(drag.elementType);
-        pushHistory(`Add ${drag.elementType}`);
+        const el = makeNewElement();
+        pushHistory(`Add ${drag.label ?? drag.elementType}`);
         addSection(section);
         setTimeout(() => addElement(section.id, el), 0);
         return;
       }
 
-      const el = createElement(drag.elementType);
-      pushHistory(`Add ${drag.elementType}`);
+      const el = makeNewElement();
+      pushHistory(`Add ${drag.label ?? drag.elementType}`);
       addElement(targetSectionId, el);
       return;
     }

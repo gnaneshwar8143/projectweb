@@ -34,6 +34,7 @@ interface EditorActions {
 
   // Elements
   addElement: (sectionId: string, element: WebElement, index?: number) => void;
+  addElementToContainer: (containerId: string, element: WebElement, index?: number) => void;
   updateElement: (sectionId: string, elementId: string, updates: Partial<WebElement>) => void;
   deleteElement: (sectionId: string, elementId: string) => void;
   duplicateElement: (sectionId: string, elementId: string) => void;
@@ -88,6 +89,32 @@ const initialState: EditorState = {
   sidebarTab: 'elements',
   showGrid: false,
 };
+
+// Recursive helpers for tree operations (containers)
+function findElementInTree(elements: WebElement[], id: string): WebElement | null {
+  for (const el of elements) {
+    if (el.id === id) return el;
+    if (el.children && el.children.length > 0) {
+      const found = findElementInTree(el.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function removeElementFromTree(elements: WebElement[], id: string): boolean {
+  const idx = elements.findIndex(e => e.id === id);
+  if (idx !== -1) {
+    elements.splice(idx, 1);
+    return true;
+  }
+  for (const el of elements) {
+    if (el.children && el.children.length > 0) {
+      if (removeElementFromTree(el.children, id)) return true;
+    }
+  }
+  return false;
+}
 
 export const useEditorStore = create<EditorStore>()(
   immer((set, get) => ({
@@ -252,13 +279,34 @@ export const useEditorStore = create<EditorStore>()(
       state.isDirty = true;
     }),
 
+    addElementToContainer: (containerId, element, index) => set(state => {
+      if (!state.project || !state.activePageId) return;
+      const page = state.project.pages.find(p => p.id === state.activePageId);
+      if (!page) return;
+      for (const section of page.sections) {
+        const container = findElementInTree(section.elements, containerId);
+        if (container) {
+          if (!container.children) container.children = [];
+          if (index !== undefined) {
+            container.children.splice(index, 0, element);
+          } else {
+            container.children.push(element);
+          }
+          state.selectedSectionId = section.id;
+          state.selectedElementId = element.id;
+          state.isDirty = true;
+          return;
+        }
+      }
+    }),
+
     updateElement: (sectionId, elementId, updates) => set(state => {
       if (!state.project || !state.activePageId) return;
       const page = state.project.pages.find(p => p.id === state.activePageId);
       if (!page) return;
       const section = page.sections.find(s => s.id === sectionId);
       if (!section) return;
-      const el = section.elements.find(e => e.id === elementId);
+      const el = findElementInTree(section.elements, elementId);
       if (el) Object.assign(el, updates);
       state.isDirty = true;
     }),
@@ -269,7 +317,7 @@ export const useEditorStore = create<EditorStore>()(
       if (!page) return;
       const section = page.sections.find(s => s.id === sectionId);
       if (!section) return;
-      section.elements = section.elements.filter(e => e.id !== elementId);
+      removeElementFromTree(section.elements, elementId);
       if (state.selectedElementId === elementId) state.selectedElementId = null;
       state.isDirty = true;
     }),

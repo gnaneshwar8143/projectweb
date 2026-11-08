@@ -31,7 +31,7 @@ export function createElement(type: ElementType): WebElement {
 
     case 'container':
       return { ...base, type, name: 'Container', children: [],
-        styles: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px', border: '2px dashed #e2e8f0', borderRadius: '8px', minHeight: '80px' } };
+        styles: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px', border: '1px dashed rgba(125,125,125,0.3)', borderRadius: '8px', minHeight: '80px', width: '100%' } };
 
     case 'spacer':
       return { ...base, type, name: 'Spacer',
@@ -101,5 +101,49 @@ export function createSection(name = 'New Section'): Section {
     locked: false,
     hidden: false,
     styles: { width: '100%', padding: '60px 40px', backgroundColor: 'transparent', minHeight: '120px' },
+  };
+}
+
+export function createColumns(cols: 2 | 3): WebElement {
+  const colChildren: WebElement[] = Array.from({ length: cols }).map((_, i) => ({
+    id: uuid(),
+    type: 'container' as const,
+    name: `Column ${i + 1}`,
+    locked: false,
+    hidden: false,
+    responsiveStyles: {},
+    children: [],
+    styles: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+      padding: '20px',
+      border: '1px dashed rgba(125,125,125,0.25)',
+      borderRadius: '8px',
+      minHeight: '120px',
+      width: '100%',
+    },
+  }));
+
+  return {
+    id: uuid(),
+    type: 'container',
+    name: `${cols} Columns Layout`,
+    locked: false,
+    hidden: false,
+    responsiveStyles: {
+      mobile: {
+        gridTemplateColumns: '1fr',
+      },
+    },
+    children: colChildren,
+    styles: {
+      display: 'grid',
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      gap: '24px',
+      width: '100%',
+      padding: '12px 0',
+      alignItems: 'center',
+    },
   };
 }

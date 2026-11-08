@@ -3,7 +3,7 @@ import {
   Type, Image as ImageIcon, MousePointer, Video, Minus, Layout, Maximize,
   Navigation, Grid, CreditCard, DollarSign, MessageSquare, FileText, Anchor,
   Layers, FileCode, Plus, Trash2, Copy, ChevronRight, Upload,
-  Search, Check, Palette, Sparkles,
+  Search, Check, Palette, Sparkles, Columns2, Columns3,
 } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useEditorStore } from '../../../store/editorStore';
@@ -14,11 +14,11 @@ import { ThemePanel } from './ThemePanel';
 import { AiPanel } from './AiPanel';
 
 // ─── Draggable sidebar element ────────────────────────────────────────────────
-function DraggableElement({ type, label, icon }: { type: ElementType; label: string; icon: React.ReactNode }) {
+function DraggableElement({ type, label, icon, variant }: { type: ElementType; label: string; icon: React.ReactNode; variant?: '2col' | '3col' }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `sidebar-${type}`,
+    id: `sidebar-${type}${variant ? `-${variant}` : ''}`,
     // label is required by SidebarDragPreview for the overlay
-    data: { fromSidebar: true, elementType: type, label },
+    data: { fromSidebar: true, elementType: type, label, variant },
   });
 
   return (
@@ -65,6 +65,8 @@ const ELEMENT_GROUPS = [
     label: 'Layout',
     items: [
       { type: 'container' as ElementType, label: 'Container', icon: <Layout size={14} /> },
+      { type: 'container' as ElementType, label: '2 Columns', variant: '2col' as const, icon: <Columns2 size={14} /> },
+      { type: 'container' as ElementType, label: '3 Columns', variant: '3col' as const, icon: <Columns3 size={14} /> },
       { type: 'spacer' as ElementType, label: 'Spacer', icon: <Maximize size={14} /> },
       { type: 'divider' as ElementType, label: 'Divider', icon: <Minus size={14} /> },
     ],
@@ -106,7 +108,7 @@ function ElementsTab() {
           <p className="panel-label px-1 mb-2">{group.label}</p>
           <div className="grid grid-cols-2 gap-1">
             {group.items.map(item => (
-              <DraggableElement key={item.type} {...item} />
+              <DraggableElement key={item.label} {...item} />
             ))}
           </div>
         </div>

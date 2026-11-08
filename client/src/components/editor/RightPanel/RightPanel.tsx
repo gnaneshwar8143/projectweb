@@ -283,6 +283,63 @@ function BorderPanel({ styles, onStyle }: { styles: ElementStyles; onStyle: (k: 
 function LayoutPanel({ styles, onStyle }: { styles: ElementStyles; onStyle: (k: keyof ElementStyles, v: string) => void }) {
   return (
     <>
+      <div className="mb-3">
+        <span className="text-[10px] text-surface-400 font-semibold block mb-1.5 uppercase tracking-wider">Quick Layout Grid</span>
+        <div className="grid grid-cols-4 gap-1">
+          <button
+            type="button"
+            onClick={() => {
+              onStyle('display', 'flex');
+              onStyle('flexDirection', 'column');
+              onStyle('gap', '16px');
+            }}
+            className="btn-secondary text-[10px] py-1 px-1 justify-center hover:border-brand-500 hover:text-brand-300"
+            title="1 Column (Vertical Stack)"
+          >
+            1 Col
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onStyle('display', 'grid');
+              onStyle('gridTemplateColumns', 'repeat(2, 1fr)');
+              onStyle('gap', '32px');
+              onStyle('alignItems', 'center');
+            }}
+            className="btn-secondary text-[10px] py-1 px-1 justify-center hover:border-brand-500 hover:text-brand-300"
+            title="2 Columns (50/50 Split)"
+          >
+            2 Cols
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onStyle('display', 'grid');
+              onStyle('gridTemplateColumns', '3fr 2fr');
+              onStyle('gap', '32px');
+              onStyle('alignItems', 'center');
+            }}
+            className="btn-secondary text-[10px] py-1 px-1 justify-center hover:border-brand-500 hover:text-brand-300"
+            title="2 Columns (60/40 Split)"
+          >
+            60/40
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onStyle('display', 'grid');
+              onStyle('gridTemplateColumns', 'repeat(3, 1fr)');
+              onStyle('gap', '24px');
+              onStyle('alignItems', 'stretch');
+            }}
+            className="btn-secondary text-[10px] py-1 px-1 justify-center hover:border-brand-500 hover:text-brand-300"
+            title="3 Columns (33/33/33)"
+          >
+            3 Cols
+          </button>
+        </div>
+      </div>
+
       <Row label="Display">
         <Select value={styles.display ?? 'block'} onChange={v => onStyle('display', v)} options={[
           { value: 'block', label: 'Block' }, { value: 'flex', label: 'Flex' }, { value: 'grid', label: 'Grid' }, { value: 'inline', label: 'Inline' }, { value: 'inline-block', label: 'Inline Block' },
