@@ -22,11 +22,12 @@ interface ElementRendererProps {
   onClick: (e: React.MouseEvent) => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onContentChange?: (content: string) => void;
   previewMode?: 'desktop' | 'tablet' | 'mobile';
 }
 
 export function ElementRenderer({
-  element, isSelected, isHovered, onClick, onMouseEnter, onMouseLeave, previewMode = 'desktop'
+  element, isSelected, isHovered, onClick, onMouseEnter, onMouseLeave, onContentChange, previewMode = 'desktop'
 }: ElementRendererProps) {
   if (element.hidden) return null;
 
@@ -45,7 +46,7 @@ export function ElementRenderer({
     style: stylesToCSS(styles),
     className: [
       'web-element',
-      isSelected ? 'element-selected' : '',
+      isSelected ? 'element-selected outline-none' : '',
       isHovered && !isSelected ? 'element-hovered' : '',
       element.locked ? 'pointer-events-none' : '',
     ].filter(Boolean).join(' '),
@@ -55,11 +56,33 @@ export function ElementRenderer({
   switch (element.type) {
     case 'heading': {
       const Tag = `h${element.level}` as keyof JSX.IntrinsicElements;
-      return <Tag {...baseProps} dangerouslySetInnerHTML={{ __html: element.content }} />;
+      return (
+        <Tag
+          {...baseProps}
+          contentEditable={isSelected && !element.locked}
+          suppressContentEditableWarning
+          onBlur={(e) => onContentChange?.(e.currentTarget.innerHTML)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              (e.currentTarget as HTMLElement).blur();
+            }
+          }}
+          dangerouslySetInnerHTML={{ __html: element.content }}
+        />
+      );
     }
 
     case 'paragraph':
-      return <p {...baseProps} dangerouslySetInnerHTML={{ __html: element.content }} />;
+      return (
+        <p
+          {...baseProps}
+          contentEditable={isSelected && !element.locked}
+          suppressContentEditableWarning
+          onBlur={(e) => onContentChange?.(e.currentTarget.innerHTML)}
+          dangerouslySetInnerHTML={{ __html: element.content }}
+        />
+      );
 
     case 'button':
       return (
@@ -67,6 +90,15 @@ export function ElementRenderer({
           href="#"
           {...baseProps}
           onClick={(e) => { e.preventDefault(); onClick(e); }}
+          contentEditable={isSelected && !element.locked}
+          suppressContentEditableWarning
+          onBlur={(e) => onContentChange?.(e.currentTarget.innerText)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              (e.currentTarget as HTMLElement).blur();
+            }
+          }}
           style={{
             ...stylesToCSS(styles),
             display: 'inline-block',
@@ -129,14 +161,14 @@ export function ElementRenderer({
     case 'navbar':
       return (
         <nav {...baseProps}>
-          <span style={{ fontWeight: 700, fontSize: '20px', color: '#ffffff', letterSpacing: '-0.5px' }}>
+          <span style={{ fontWeight: 700, fontSize: '20px', color: 'inherit', letterSpacing: '-0.5px' }}>
             {element.logo}
           </span>
           <ul style={{ display: 'flex', gap: '32px', listStyle: 'none', margin: 0, padding: 0 }}>
             {element.links.map((link, i) => (
               <li key={i}>
                 <a href="#" onClick={e => e.preventDefault()}
-                  style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
+                  style={{ color: 'inherit', opacity: 0.85, textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
                   {link.label}
                 </a>
               </li>
@@ -149,7 +181,7 @@ export function ElementRenderer({
       return (
         <div {...baseProps} style={{ ...stylesToCSS(styles), display: 'grid', gridTemplateColumns: `repeat(${element.columns}, 1fr)`, gap: '12px' }}>
           {element.images.map((img, i) => (
-            <img key={i} src={img.src} alt={img.alt} style={{ width: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+            <img key={i} src={img.src} alt={img.alt} style={{ width: '100%', objectFit: 'cover', borderRadius: 'var(--border-radius, 8px)' }} />
           ))}
         </div>
       );
@@ -162,7 +194,7 @@ export function ElementRenderer({
           )}
           <div style={{ padding: element.image ? '24px' : '0' }}>
             <h3 style={{ margin: '0 0 8px', color: 'inherit', fontSize: '18px', fontWeight: 600 }}>{element.title}</h3>
-            {element.description && <p style={{ margin: '0 0 16px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: '1.6' }}>{element.description}</p>}
+            {element.description && <p style={{ margin: '0 0 16px', color: 'inherit', opacity: 0.75, fontSize: '14px', lineHeight: '1.6' }}>{element.description}</p>}
             {element.buttonText && (
               <a href={element.buttonHref || '#'} onClick={e => e.preventDefault()}
                 style={{ display: 'inline-block', padding: '10px 24px', backgroundColor: primaryBg(), color: '#fff', borderRadius: 'var(--border-radius, 8px)', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>
@@ -178,27 +210,28 @@ export function ElementRenderer({
         <div {...baseProps}>
           {element.plans.map((plan, i) => (
             <div key={i} style={{
-              backgroundColor: plan.highlighted ? '#6370f1' : 'rgba(255,255,255,0.05)',
-              borderRadius: '16px', padding: '40px', border: plan.highlighted ? '2px solid #6370f1' : '1px solid rgba(255,255,255,0.1)',
+              backgroundColor: plan.highlighted ? primaryBg() : 'rgba(125,125,125,0.06)',
+              borderRadius: 'var(--border-radius, 16px)', padding: '40px', border: plan.highlighted ? `2px solid ${primaryBg()}` : '1px solid rgba(125,125,125,0.18)',
               transform: plan.highlighted ? 'scale(1.05)' : 'none',
+              color: plan.highlighted ? '#ffffff' : 'inherit',
             }}>
-              <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: plan.highlighted ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>{plan.name}</p>
+              <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: plan.highlighted ? 'rgba(255,255,255,0.9)' : 'inherit', opacity: plan.highlighted ? 1 : 0.7 }}>{plan.name}</p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '48px', fontWeight: 800, color: '#fff' }}>{plan.price}</span>
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>{plan.period}</span>
+                <span style={{ fontSize: '48px', fontWeight: 800, color: plan.highlighted ? '#fff' : 'inherit' }}>{plan.price}</span>
+                <span style={{ color: plan.highlighted ? 'rgba(255,255,255,0.7)' : 'inherit', opacity: 0.6, fontSize: '14px' }}>{plan.period}</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '24px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {plan.features.map((f, j) => (
-                  <li key={j} style={{ fontSize: '14px', color: plan.highlighted ? 'rgba(255,255,255,0.9)' : '#94a3b8', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: plan.highlighted ? '#fff' : '#6370f1' }}>✓</span> {f}
+                  <li key={j} style={{ fontSize: '14px', color: plan.highlighted ? 'rgba(255,255,255,0.95)' : 'inherit', opacity: plan.highlighted ? 1 : 0.85, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: plan.highlighted ? '#fff' : primaryBg() }}>✓</span> {f}
                   </li>
                 ))}
               </ul>
               <a href="#" onClick={e => e.preventDefault()} style={{
                 display: 'block', textAlign: 'center', padding: '14px 24px',
-                backgroundColor: plan.highlighted ? '#fff' : 'rgba(99,112,241,0.2)',
-                color: plan.highlighted ? '#6370f1' : '#fff',
-                borderRadius: '8px', fontWeight: 700, fontSize: '14px', textDecoration: 'none',
+                backgroundColor: plan.highlighted ? '#ffffff' : primaryBg(),
+                color: plan.highlighted ? primaryBg() : '#ffffff',
+                borderRadius: 'var(--border-radius, 8px)', fontWeight: 700, fontSize: '14px', textDecoration: 'none',
               }}>{plan.buttonText}</a>
             </div>
           ))}
@@ -213,12 +246,12 @@ export function ElementRenderer({
               <span key={i} style={{ color: '#f59e0b', fontSize: '18px' }}>★</span>
             ))}
           </div>
-          <p style={{ fontSize: '16px', lineHeight: '1.7', color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', marginBottom: '20px' }}>"{element.quote}"</p>
+          <p style={{ fontSize: '16px', lineHeight: '1.7', color: 'inherit', opacity: 0.9, fontStyle: 'italic', marginBottom: '20px' }}>"{element.quote}"</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {element.avatar && <img src={element.avatar} alt={element.author} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />}
             <div>
-              <p style={{ margin: 0, fontWeight: 700, color: '#fff', fontSize: '14px' }}>{element.author}</p>
-              <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>{element.role}</p>
+              <p style={{ margin: 0, fontWeight: 700, color: 'inherit', fontSize: '14px' }}>{element.author}</p>
+              <p style={{ margin: 0, color: 'inherit', opacity: 0.6, fontSize: '12px' }}>{element.role}</p>
             </div>
           </div>
         </div>
@@ -230,13 +263,13 @@ export function ElementRenderer({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {element.fields.map((field, i) => (
               <div key={i}>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 500, color: 'inherit', opacity: 0.85 }}>
                   {field.label}{field.required && ' *'}
                 </label>
                 {field.type === 'textarea' ? (
-                  <textarea placeholder={field.placeholder} rows={4} style={{ width: '100%', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#fff', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                  <textarea placeholder={field.placeholder} rows={4} style={{ width: '100%', padding: '12px 16px', backgroundColor: 'rgba(125,125,125,0.06)', border: '1px solid rgba(125,125,125,0.2)', borderRadius: 'var(--border-radius, 8px)', color: 'inherit', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
                 ) : (
-                  <input type={field.type} placeholder={field.placeholder} style={{ width: '100%', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }} />
+                  <input type={field.type} placeholder={field.placeholder} style={{ width: '100%', padding: '12px 16px', backgroundColor: 'rgba(125,125,125,0.06)', border: '1px solid rgba(125,125,125,0.2)', borderRadius: 'var(--border-radius, 8px)', color: 'inherit', fontSize: '14px', boxSizing: 'border-box' }} />
                 )}
               </div>
             ))}
@@ -250,14 +283,14 @@ export function ElementRenderer({
     case 'footer':
       return (
         <footer {...baseProps} style={{ ...stylesToCSS(styles), display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', textAlign: 'center' }}>
-          <span style={{ fontSize: '22px', fontWeight: 700, color: '#fff' }}>{element.logo}</span>
-          {element.tagline && <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>{element.tagline}</p>}
+          <span style={{ fontSize: '22px', fontWeight: 700, color: 'inherit' }}>{element.logo}</span>
+          {element.tagline && <p style={{ margin: 0, fontSize: '14px', color: 'inherit', opacity: 0.7 }}>{element.tagline}</p>}
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
             {element.links.map((link, i) => (
-              <a key={i} href="#" onClick={e => e.preventDefault()} style={{ color: '#64748b', textDecoration: 'none', fontSize: '14px' }}>{link.label}</a>
+              <a key={i} href="#" onClick={e => e.preventDefault()} style={{ color: 'inherit', opacity: 0.75, textDecoration: 'none', fontSize: '14px' }}>{link.label}</a>
             ))}
           </div>
-          <p style={{ margin: 0, fontSize: '12px', color: '#374151' }}>{element.copyright}</p>
+          <p style={{ margin: 0, fontSize: '12px', color: 'inherit', opacity: 0.5 }}>{element.copyright}</p>
         </footer>
       );
 

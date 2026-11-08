@@ -173,6 +173,13 @@ function SortableElement({
         onClick={(e) => { e.stopPropagation(); onSelect(sectionId, element.id); }}
         onMouseEnter={() => onHover(element.id)}
         onMouseLeave={() => onHover(null)}
+        onContentChange={(val) => {
+          if (element.type === 'button') {
+            updateElement(sectionId, element.id, { text: val });
+          } else {
+            updateElement(sectionId, element.id, { content: val });
+          }
+        }}
         previewMode={previewMode}
       />
     </div>
@@ -229,19 +236,25 @@ function SectionRenderer({
               ].join(' ')}
             >
               <p className="text-[13px] text-surface-400 mb-3">
-                {isOver ? '✦ Drop here to add element' : 'Drop elements here or'}
+                {isOver ? '✦ Drop here to add element' : 'Drop elements from sidebar or quick-add:'}
               </p>
               {!isOver && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const el = createElement('paragraph');
-                    addElement(section.id, el);
-                  }}
-                  className="btn-secondary text-[12px] py-1.5"
-                >
-                  <Plus size={12} /> Add Element
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {(['heading', 'paragraph', 'button', 'image', 'card', 'navbar'] as const).map(type => (
+                    <button
+                      key={type}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const el = createElement(type);
+                        useEditorStore.getState().pushHistory(`Add ${type}`);
+                        addElement(section.id, el);
+                      }}
+                      className="btn-secondary text-[11px] py-1 px-2.5 capitalize flex items-center gap-1 hover:border-brand-500 hover:text-brand-300"
+                    >
+                      <Plus size={10} /> {type}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           ) : (
@@ -368,12 +381,14 @@ export function Canvas({ overSectionId, overCanvasEmpty }: CanvasProps) {
       }}
     >
       <div
-        className="bg-white shadow-2xl transition-all duration-300 origin-top relative"
+        className="shadow-2xl transition-all duration-300 origin-top relative"
         style={{
           width: canvasWidthMap[previewMode],
           minHeight: '100%',
           maxWidth: '100%',
-          fontFamily: 'Inter, system-ui, sans-serif',
+          backgroundColor: project?.theme?.backgroundColor || '#ffffff',
+          color: project?.theme?.textColor || '#1e293b',
+          fontFamily: project?.theme?.bodyFont ? `'${project.theme.bodyFont}', Inter, system-ui, sans-serif` : 'Inter, system-ui, sans-serif',
         }}
         onClick={e => e.stopPropagation()}
       >

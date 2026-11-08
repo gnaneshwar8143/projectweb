@@ -100,6 +100,6 @@ export function createSection(name = 'New Section'): Section {
     elements: [],
     locked: false,
     hidden: false,
-    styles: { width: '100%', padding: '60px 40px', backgroundColor: '#ffffff', minHeight: '120px' },
+    styles: { width: '100%', padding: '60px 40px', backgroundColor: 'transparent', minHeight: '120px' },
   };
 }
