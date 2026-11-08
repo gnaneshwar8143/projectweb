@@ -1,13 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Toolbar } from './Toolbar/Toolbar';
 import { LeftSidebar } from './LeftSidebar/LeftSidebar';
 import { Canvas, EditorDndProvider } from './Canvas/Canvas';
 import { RightPanel } from './RightPanel/RightPanel';
 import { useEditorStore } from '../../store/editorStore';
 import { projectsApi } from '../../api';
-import { exportWebsite } from '../../export/exportEngine';
+import { exportWebsite, exportToReactComponent } from '../../export/exportEngine';
 import { X, Globe, Monitor, Tablet, Smartphone } from 'lucide-react';
 import { ElementRenderer } from '../renderer/ElementRenderer';
+import { DEFAULT_THEME, BORDER_RADIUS_MAP } from '../../types';
 
 interface EditorProps {
   onBackToDashboard: () => void;
@@ -17,6 +18,23 @@ export function Editor({ onBackToDashboard }: EditorProps) {
   const { project, isDirty, setSaving, markSaved, pushHistory, previewMode } = useEditorStore();
   const [showPreview, setShowPreview] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  // ── Inject CSS theme tokens into :root whenever the project theme changes ──
+  const theme = project?.theme ?? DEFAULT_THEME;
+  const br = BORDER_RADIUS_MAP[theme.borderRadius ?? 'md'];
+  useMemo(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--primary-color',   theme.primaryColor);
+    root.style.setProperty('--secondary-color', theme.secondaryColor);
+    root.style.setProperty('--accent-color',    theme.accentColor);
+    root.style.setProperty('--text-color',      theme.textColor);
+    root.style.setProperty('--bg-color',        theme.backgroundColor);
+    root.style.setProperty('--heading-font',    `'${theme.headingFont}', system-ui, sans-serif`);
+    root.style.setProperty('--body-font',       `'${theme.bodyFont}', system-ui, sans-serif`);
+    root.style.setProperty('--border-radius',   br);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme.primaryColor, theme.secondaryColor, theme.accentColor, theme.textColor,
+      theme.backgroundColor, theme.headingFont, theme.bodyFont, br]);
 
   // Auto-save every 30s when dirty
   useEffect(() => {
@@ -86,6 +104,11 @@ export function Editor({ onBackToDashboard }: EditorProps) {
     await exportWebsite(project);
   };
 
+  const handleExportReact = async () => {
+    if (!project) return;
+    await exportToReactComponent(project);
+  };
+
   const previewWidthMap = { desktop: '100%', tablet: '768px', mobile: '390px' } as const;
   const previewIconMap = { desktop: Monitor, tablet: Tablet, mobile: Smartphone } as const;
 
@@ -99,6 +122,7 @@ export function Editor({ onBackToDashboard }: EditorProps) {
             onSave={handleSave}
             onPreview={() => setShowPreview(true)}
             onExport={handleExport}
+            onExportReact={handleExportReact}
             onSettings={() => setShowSettings(true)}
           />
 

@@ -255,6 +255,38 @@ export interface Page {
   };
 }
 
+// ─── Theme Config (Feature 1) ─────────────────────────────────────────────────
+export interface ThemeConfig {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  textColor: string;
+  backgroundColor: string;
+  headingFont: string;
+  bodyFont: string;
+  borderRadius: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
+}
+
+export const DEFAULT_THEME: ThemeConfig = {
+  primaryColor: '#6370f1',
+  secondaryColor: '#1e2438',
+  accentColor: '#f59e0b',
+  textColor: '#f8fafc',
+  backgroundColor: '#0f1117',
+  headingFont: 'Inter',
+  bodyFont: 'Inter',
+  borderRadius: 'md',
+};
+
+export const BORDER_RADIUS_MAP: Record<ThemeConfig['borderRadius'], string> = {
+  none: '0px',
+  sm:   '4px',
+  md:   '8px',
+  lg:   '12px',
+  xl:   '16px',
+  full: '9999px',
+};
+
 // ─── Project ──────────────────────────────────────────────────────────────────
 export interface Project {
   _id: string;
@@ -268,10 +300,19 @@ export interface Project {
     globalStyles: string;
     primaryColor: string;
   };
+  theme: ThemeConfig;
   userId: string;
   createdAt: string;
   updatedAt: string;
   version: number;
+}
+
+// ─── AI Generate ──────────────────────────────────────────────────────────────
+export interface AiGenerateRequest {
+  prompt: string;
+}
+export interface AiGenerateResponse {
+  section: Section;
 }
 
 // ─── Editor State ─────────────────────────────────────────────────────────────
@@ -286,7 +327,7 @@ export interface EditorState {
   isSaving: boolean;
   history: HistoryEntry[];
   historyIndex: number;
-  sidebarTab: 'elements' | 'templates' | 'assets' | 'pages' | 'layers';
+  sidebarTab: 'elements' | 'templates' | 'assets' | 'pages' | 'layers' | 'theme' | 'ai';
   showGrid: boolean;
 }
 

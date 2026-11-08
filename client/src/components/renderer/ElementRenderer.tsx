@@ -2,8 +2,17 @@ import React, { type JSX } from 'react';
 import type { WebElement, ElementStyles } from '../../types';
 
 // Convert our ElementStyles object to a React CSSProperties object
+// Injects CSS custom property fallbacks for theme-aware values
 export function stylesToCSS(styles: ElementStyles): React.CSSProperties {
   return styles as React.CSSProperties;
+}
+
+// Theme-aware style helpers — use CSS vars as defaults when no explicit value given
+function primaryBg(explicit?: string): string {
+  return explicit || 'var(--primary-color, #6370f1)';
+}
+function accentBg(explicit?: string): string {
+  return explicit || 'var(--accent-color, #f59e0b)';
 }
 
 interface ElementRendererProps {
@@ -58,7 +67,14 @@ export function ElementRenderer({
           href="#"
           {...baseProps}
           onClick={(e) => { e.preventDefault(); onClick(e); }}
-          style={{ ...stylesToCSS(styles), display: 'inline-block', cursor: 'pointer', textDecoration: 'none' }}
+          style={{
+            ...stylesToCSS(styles),
+            display: 'inline-block',
+            cursor: 'pointer',
+            textDecoration: 'none',
+            backgroundColor: (styles.backgroundColor as string) || 'var(--primary-color, #6370f1)',
+            borderRadius: (styles.borderRadius as string) || 'var(--border-radius, 8px)',
+          }}
         >
           {element.text}
         </a>
@@ -149,7 +165,7 @@ export function ElementRenderer({
             {element.description && <p style={{ margin: '0 0 16px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: '1.6' }}>{element.description}</p>}
             {element.buttonText && (
               <a href={element.buttonHref || '#'} onClick={e => e.preventDefault()}
-                style={{ display: 'inline-block', padding: '10px 24px', backgroundColor: '#6370f1', color: '#fff', borderRadius: '8px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>
+                style={{ display: 'inline-block', padding: '10px 24px', backgroundColor: primaryBg(), color: '#fff', borderRadius: 'var(--border-radius, 8px)', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>
                 {element.buttonText}
               </a>
             )}
@@ -224,7 +240,7 @@ export function ElementRenderer({
                 )}
               </div>
             ))}
-            <button type="submit" style={{ padding: '14px 32px', backgroundColor: '#6370f1', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginTop: '8px' }}>
+            <button type="submit" style={{ padding: '14px 32px', backgroundColor: primaryBg(), color: '#fff', border: 'none', borderRadius: 'var(--border-radius, 8px)', fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginTop: '8px' }}>
               {element.submitText}
             </button>
           </div>

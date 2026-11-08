@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Monitor, Tablet, Smartphone, Undo2, Redo2, Save, Eye,
-  Download, Settings, Zap, ChevronDown, Circle, CheckCircle2,
+  Download, Settings, Zap, Circle, CheckCircle2,
+  Code2, FileDown, ChevronDown,
 } from 'lucide-react';
 import { useEditorStore } from '../../../store/editorStore';
 import type { Breakpoint } from '../../../types';
@@ -10,6 +11,7 @@ interface ToolbarProps {
   onSave: () => void;
   onPreview: () => void;
   onExport: () => void;
+  onExportReact: () => void;
   onSettings: () => void;
 }
 
@@ -19,11 +21,13 @@ const BREAKPOINTS: { key: Breakpoint; icon: React.ReactNode; label: string; widt
   { key: 'mobile',  icon: <Smartphone size={15} />, label: 'Mobile', width: '390px' },
 ];
 
-export function Toolbar({ onSave, onPreview, onExport, onSettings }: ToolbarProps) {
+export function Toolbar({ onSave, onPreview, onExport, onExportReact, onSettings }: ToolbarProps) {
   const { project, isDirty, isSaving, previewMode, canUndo, canRedo, undo, redo, setPreviewMode, updateProjectName } = useEditorStore();
   const [editingName, setEditingName] = useState(false);
   const [nameVal, setNameVal] = useState('');
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const startEditName = () => {
     setNameVal(project?.name ?? '');
@@ -35,6 +39,17 @@ export function Toolbar({ onSave, onPreview, onExport, onSettings }: ToolbarProp
     if (nameVal.trim()) updateProjectName(nameVal.trim());
     setEditingName(false);
   };
+
+  // Close export menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   return (
     <header className="flex items-center justify-between h-[var(--toolbar-h)] px-3 border-b border-surface-800 bg-surface-950 shrink-0 z-50">
@@ -112,20 +127,10 @@ export function Toolbar({ onSave, onPreview, onExport, onSettings }: ToolbarProp
       {/* Right: actions */}
       <div className="flex items-center gap-1">
         {/* Undo/Redo */}
-        <button
-          onClick={undo}
-          disabled={!canUndo()}
-          title="Undo (Ctrl+Z)"
-          className="btn-ghost disabled:opacity-30 disabled:cursor-not-allowed"
-        >
+        <button onClick={undo} disabled={!canUndo()} title="Undo (Ctrl+Z)" className="btn-ghost disabled:opacity-30 disabled:cursor-not-allowed">
           <Undo2 size={15} />
         </button>
-        <button
-          onClick={redo}
-          disabled={!canRedo()}
-          title="Redo (Ctrl+Y)"
-          className="btn-ghost disabled:opacity-30 disabled:cursor-not-allowed"
-        >
+        <button onClick={redo} disabled={!canRedo()} title="Redo (Ctrl+Y)" className="btn-ghost disabled:opacity-30 disabled:cursor-not-allowed">
           <Redo2 size={15} />
         </button>
 
@@ -143,9 +148,52 @@ export function Toolbar({ onSave, onPreview, onExport, onSettings }: ToolbarProp
         <button onClick={onPreview} className="btn-secondary text-[12px] py-1.5 px-3">
           <Eye size={14} /> Preview
         </button>
-        <button onClick={onExport} className="btn-primary text-[12px] py-1.5 px-3">
-          <Download size={14} /> Export
-        </button>
+
+        {/* Export dropdown */}
+        <div ref={exportMenuRef} className="relative">
+          <div className="flex items-stretch">
+            <button
+              onClick={onExport}
+              className="btn-primary text-[12px] py-1.5 px-3 rounded-r-none border-r border-brand-700"
+              title="Download HTML zip"
+            >
+              <Download size={14} /> Export
+            </button>
+            <button
+              onClick={() => setShowExportMenu(v => !v)}
+              className="btn-primary text-[12px] py-1.5 px-2 rounded-l-none"
+              title="More export options"
+            >
+              <ChevronDown size={13} />
+            </button>
+          </div>
+
+          {showExportMenu && (
+            <div className="absolute right-0 top-full mt-1 w-52 bg-surface-800 border border-surface-700 rounded-xl shadow-2xl z-[200] overflow-hidden">
+              <button
+                onClick={() => { onExport(); setShowExportMenu(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-surface-200 hover:bg-surface-700 hover:text-white transition-colors"
+              >
+                <FileDown size={15} className="text-brand-400 shrink-0" />
+                <div className="text-left">
+                  <p className="font-medium leading-tight">HTML + CSS</p>
+                  <p className="text-[11px] text-surface-500 leading-tight mt-0.5">Static site, ready to deploy</p>
+                </div>
+              </button>
+              <div className="border-t border-surface-700" />
+              <button
+                onClick={() => { onExportReact(); setShowExportMenu(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-surface-200 hover:bg-surface-700 hover:text-white transition-colors"
+              >
+                <Code2 size={15} className="text-cyan-400 shrink-0" />
+                <div className="text-left">
+                  <p className="font-medium leading-tight">React Component (.tsx)</p>
+                  <p className="text-[11px] text-surface-500 leading-tight mt-0.5">Vite + React project</p>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

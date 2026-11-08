@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useEditorStore } from '../../store/editorStore';
 import { projectsApi } from '../../api';
 import type { Project } from '../../types';
+import { DEFAULT_THEME } from '../../types';
 import { v4 as uuid } from 'uuid';
 
 // ─── Create empty project ─────────────────────────────────────────────────────
@@ -24,6 +25,7 @@ function createEmptyProject(name: string, userId: string): Project {
       meta: { title: name, description: '', keywords: '' },
     }],
     settings: { fonts: ['Inter'], globalStyles: '', primaryColor: '#6370f1' },
+    theme: DEFAULT_THEME,
     userId,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

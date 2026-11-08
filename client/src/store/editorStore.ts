@@ -3,8 +3,9 @@ import { immer } from 'zustand/middleware/immer';
 import { v4 as uuid } from 'uuid';
 import type {
   EditorState, Project, Page, Section, WebElement,
-  Breakpoint, HistoryEntry,
+  Breakpoint, HistoryEntry, ThemeConfig,
 } from '../types';
+import { DEFAULT_THEME } from '../types';
 
 const MAX_HISTORY = 50;
 
@@ -64,6 +65,9 @@ interface EditorActions {
   copyElement: (sectionId: string, elementId: string) => void;
   pasteElement: (sectionId: string) => void;
 
+  // Theme
+  updateTheme: (updates: Partial<ThemeConfig>) => void;
+
   // Load template
   loadTemplate: (pages: Page[]) => void;
 }
@@ -100,6 +104,7 @@ export const useEditorStore = create<EditorStore>()(
     // ── Project ───────────────────────────────────────────────────────────────
     setProject: (project) => set(state => {
       state.project = project;
+      if (!state.project.theme) state.project.theme = DEFAULT_THEME;
       state.activePageId = project.pages[0]?.id ?? null;
       state.selectedElementId = null;
       state.selectedSectionId = null;
@@ -381,6 +386,13 @@ export const useEditorStore = create<EditorStore>()(
       clone.id = uuid();
       section.elements.push(clone);
       state.selectedElementId = clone.id;
+      state.isDirty = true;
+    }),
+
+    // ── Theme ─────────────────────────────────────────────────────────────────
+    updateTheme: (updates) => set(state => {
+      if (!state.project) return;
+      state.project.theme = { ...(state.project.theme ?? DEFAULT_THEME), ...updates };
       state.isDirty = true;
     }),
 

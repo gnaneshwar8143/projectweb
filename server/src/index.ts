@@ -9,6 +9,7 @@ import { connectDB } from './config/database';
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
 import assetRoutes from './routes/assets';
+import aiRoutes from './routes/ai';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/assets', assetRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

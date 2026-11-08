@@ -3,13 +3,15 @@ import {
   Type, Image as ImageIcon, MousePointer, Video, Minus, Layout, Maximize,
   Navigation, Grid, CreditCard, DollarSign, MessageSquare, FileText, Anchor,
   Layers, FileCode, Plus, Trash2, Copy, ChevronRight, Upload,
-  Search, Check, Palette,
+  Search, Check, Palette, Sparkles,
 } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useEditorStore } from '../../../store/editorStore';
 import { TEMPLATES } from '../../../templates';
 import type { ElementType } from '../../../types';
 import { v4 as uuid } from 'uuid';
+import { ThemePanel } from './ThemePanel';
+import { AiPanel } from './AiPanel';
 
 // ─── Draggable sidebar element ────────────────────────────────────────────────
 function DraggableElement({ type, label, icon }: { type: ElementType; label: string; icon: React.ReactNode }) {
@@ -332,11 +334,13 @@ export function LeftSidebar() {
   const { sidebarTab, setSidebarTab } = useEditorStore();
 
   const TABS: { key: typeof sidebarTab; icon: React.ReactNode; label: string }[] = [
-    { key: 'elements', icon: <Layout size={14} />, label: 'Elements' },
-    { key: 'templates', icon: <Palette size={14} />, label: 'Templates' },
-    { key: 'pages', icon: <FileText size={14} />, label: 'Pages' },
-    { key: 'layers', icon: <Layers size={14} />, label: 'Layers' },
-    { key: 'assets', icon: <ImageIcon size={14} />, label: 'Assets' },
+    { key: 'elements',  icon: <Layout size={14} />,    label: 'Elements' },
+    { key: 'templates', icon: <Palette size={14} />,   label: 'Templates' },
+    { key: 'pages',     icon: <FileText size={14} />,  label: 'Pages' },
+    { key: 'layers',    icon: <Layers size={14} />,    label: 'Layers' },
+    { key: 'assets',    icon: <ImageIcon size={14} />, label: 'Assets' },
+    { key: 'theme',     icon: <Palette size={14} />,   label: 'Theme' },
+    { key: 'ai',        icon: <Sparkles size={14} />,  label: 'AI' },
   ];
 
   return (
@@ -368,6 +372,8 @@ export function LeftSidebar() {
         {sidebarTab === 'pages'     && <PagesTab />}
         {sidebarTab === 'layers'    && <LayersTab />}
         {sidebarTab === 'assets'    && <AssetsTab />}
+        {sidebarTab === 'theme'     && <ThemePanel />}
+        {sidebarTab === 'ai'        && <AiPanel />}
       </div>
     </aside>
   );
