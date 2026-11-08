@@ -389,6 +389,303 @@ export const startupTemplate = (): Page[] => {
   return [{ id: uuid(), name: 'Home', slug: 'home', sections: [heroSection, featuresSection, pricingSection, footerSection], meta: { title: 'Nexus AI — Ship Faster', description: 'AI platform for faster product teams', keywords: 'AI, startup, product, development' } }];
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEMPLATE 5: 3D Spatial & CyberTech Studio
+// ═══════════════════════════════════════════════════════════════════════════════
+export const threeDStudioTemplate = (): Page[] => {
+  const interactive3dSrcDoc = `&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;style&gt;
+    body { margin: 0; background: transparent; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: -apple-system, sans-serif; }
+    canvas { width: 100%; height: 100%; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+    .badge { position: absolute; bottom: 14px; right: 14px; background: rgba(8,12,24,0.85); color: #00f5ff; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(0,245,255,0.4); backdrop-filter: blur(8px); pointer-events: none; letter-spacing: 0.5px; box-shadow: 0 0 15px rgba(0,245,255,0.2); }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;canvas id="c"&gt;&lt;/canvas&gt;
+  &lt;div class="badge"&gt;✦ Drag to Orbit 3D&lt;/div&gt;
+  &lt;script&gt;
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const phi = (1 + Math.sqrt(5)) / 2;
+    const rawNodes = [
+      [-1, phi, 0], [1, phi, 0], [-1, -phi, 0], [1, -phi, 0],
+      [0, -1, phi], [0, 1, phi], [0, -1, -phi], [0, 1, -phi],
+      [phi, 0, -1], [phi, 0, 1], [-phi, 0, -1], [-phi, 0, 1]
+    ];
+    const nodes = rawNodes.map(([x,y,z]) => ({ x: x*75, y: y*75, z: z*75 }));
+    const edges = [
+      [0,11],[0,5],[0,1],[0,7],[0,10],[1,5],[1,9],[1,8],[1,7],
+      [2,11],[2,10],[2,6],[2,3],[2,4],[3,4],[3,9],[3,8],[3,6],
+      [4,11],[4,5],[4,9],[5,9],[6,10],[6,7],[6,8],[7,8],[8,9],[10,11]
+    ];
+
+    let rotX = 0.35, rotY = 0.45;
+    let isDown = false, lastX = 0, lastY = 0;
+
+    window.addEventListener('mousedown', e => { isDown = true; lastX = e.clientX; lastY = e.clientY; });
+    window.addEventListener('mousemove', e => {
+      if (!isDown) return;
+      rotY += (e.clientX - lastX) * 0.012;
+      rotX += (e.clientY - lastY) * 0.012;
+      lastX = e.clientX; lastY = e.clientY;
+    });
+    window.addEventListener('mouseup', () => isDown = false);
+    window.addEventListener('touchstart', e => { isDown = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; });
+    window.addEventListener('touchmove', e => {
+      if (!isDown) return;
+      rotY += (e.touches[0].clientX - lastX) * 0.012;
+      rotX += (e.touches[0].clientY - lastY) * 0.012;
+      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+    });
+    window.addEventListener('touchend', () => isDown = false);
+
+    function loop() {
+      if (!isDown) {
+        rotY += 0.009;
+        rotX += 0.004;
+      }
+      ctx.clearRect(0, 0, width, height);
+
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+      const proj = nodes.map(n => {
+        let x = n.x * cosY - n.z * sinY;
+        let z = n.z * cosY + n.x * sinY;
+        let y = n.y * cosX - z * sinX;
+        z = z * cosX + n.y * sinX;
+        const scale = 400 / (400 + z);
+        return { x: x * scale + width / 2, y: y * scale + height / 2, z };
+      });
+
+      edges.forEach(([i, j]) => {
+        const p1 = proj[i], p2 = proj[j];
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+        grad.addColorStop(0, '#00f5ff');
+        grad.addColorStop(1, '#a855f7');
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#00f5ff';
+        ctx.shadowBlur = 14;
+        ctx.stroke();
+      });
+
+      proj.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#a855f7';
+        ctx.shadowBlur = 15;
+        ctx.fill();
+      });
+
+      requestAnimationFrame(loop);
+    }
+    loop();
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;`;
+
+  const heroSection = mkSection('Hero 3D', [
+    {
+      id: uuid(), type: 'navbar', name: 'Navbar', logo: 'CYBER//SPATIAL',
+      links: [
+        { label: '3D Engine', href: '#features' },
+        { label: 'Showcase', href: '#showcase' },
+        { label: 'Cloud GPU', href: '#pricing' },
+        { label: 'Documentation', href: '#' },
+      ],
+      locked: false, hidden: false,
+      styles: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0 48px 0', color: '#00f5ff' },
+      responsiveStyles: {},
+    },
+    {
+      id: uuid(), type: 'container', name: 'Hero 3D Split',
+      locked: false, hidden: false,
+      responsiveStyles: { mobile: { gridTemplateColumns: '1fr' } },
+      styles: { display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '48px', alignItems: 'center' },
+      children: [
+        {
+          id: uuid(), type: 'container', name: 'Hero Content',
+          locked: false, hidden: false, responsiveStyles: {},
+          styles: { display: 'flex', flexDirection: 'column', gap: '16px' },
+          children: [
+            heading('Next-Gen 3D Web Experiences', 1, {
+              fontSize: '56px', fontWeight: '900', color: '#ffffff',
+              lineHeight: '1.08', letterSpacing: '-1.5px', marginBottom: '8px',
+              textShadow: '0 0 40px rgba(0,245,255,0.25)',
+            }),
+            para('Design, animate, and deploy real-time interactive 3D spatial scenes directly in your browser with zero latency.', {
+              fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.7', maxWidth: '500px',
+            }),
+            {
+              id: uuid(), type: 'container', name: 'CTA Row',
+              locked: false, hidden: false, responsiveStyles: {},
+              styles: { display: 'flex', alignItems: 'center', gap: '16px', marginTop: '16px', flexWrap: 'wrap' },
+              children: [
+                btn('Launch 3D Studio', '#', '#00f5ff', {
+                  color: '#080c18', padding: '16px 36px', borderRadius: '12px', fontWeight: '800',
+                  boxShadow: '0 0 30px rgba(0,245,255,0.4)',
+                }),
+                btn('Explore SDK', '#', 'transparent', {
+                  color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)', padding: '16px 28px', borderRadius: '12px',
+                }),
+              ],
+            },
+          ],
+        },
+        {
+          id: uuid(), type: 'html', name: 'Interactive 3D Hologram',
+          locked: false, hidden: false, responsiveStyles: {},
+          styles: {
+            width: '100%', height: '420px', borderRadius: '24px', overflow: 'hidden',
+            border: '1px solid rgba(0,245,255,0.3)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(0,245,255,0.15)',
+            backgroundImage: 'radial-gradient(circle at center, rgba(168,85,247,0.12) 0%, rgba(8,12,24,0.95) 70%)',
+          },
+          html: `<iframe srcdoc="${interactive3dSrcDoc}" style="width:100%;height:100%;border:none;" title="Interactive 3D Viewport"></iframe>`,
+        },
+      ],
+    },
+  ], {
+    backgroundImage: 'radial-gradient(ellipse at 80% 20%, rgba(0,245,255,0.08) 0%, rgba(8,10,16,1) 60%)',
+    backgroundColor: '#080a10',
+    padding: '60px 48px 100px',
+    minHeight: '90vh',
+  });
+
+  const featuresSection = mkSection('Features 3D', [
+    heading('Spatial Computing Architecture', 2, {
+      textAlign: 'center', color: '#ffffff', fontSize: '38px', fontWeight: '800', marginBottom: '8px',
+    }),
+    para('Engineered for ultra-low latency WebGL & WebGPU rendering at 120 FPS.', {
+      textAlign: 'center', margin: '0 auto 60px', color: 'rgba(255,255,255,0.6)',
+    }),
+    {
+      id: uuid(), type: 'container', name: '3D Feature Cards',
+      locked: false, hidden: false,
+      responsiveStyles: { mobile: { gridTemplateColumns: '1fr' } },
+      styles: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
+      children: [
+        {
+          id: uuid(), type: 'card', name: 'Feature 1',
+          title: 'Real-Time Raytracing',
+          description: 'Physically based rendering with dynamic global illumination and soft shadow maps calculated on client GPU.',
+          buttonText: 'Learn More', buttonHref: '#',
+          locked: false, hidden: false, responsiveStyles: {},
+          styles: {
+            backgroundColor: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(0,245,255,0.2)',
+            borderRadius: '20px',
+            padding: '24px',
+            color: '#ffffff',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+          },
+        },
+        {
+          id: uuid(), type: 'card', name: 'Feature 2',
+          title: '3D Neural Splats',
+          description: 'Convert real-world video scans into photorealistic 3D Gaussian splatting scenes with sub-millimeter precision.',
+          buttonText: 'View Demo', buttonHref: '#',
+          locked: false, hidden: false, responsiveStyles: {},
+          styles: {
+            backgroundColor: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(168,85,247,0.3)',
+            borderRadius: '20px',
+            padding: '24px',
+            color: '#ffffff',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+          },
+        },
+        {
+          id: uuid(), type: 'card', name: 'Feature 3',
+          title: 'Spatial Audio Engine',
+          description: 'Head-related transfer function (HRTF) binaural sound synthesis synchronized with 3D object motion.',
+          buttonText: 'Listen Audio', buttonHref: '#',
+          locked: false, hidden: false, responsiveStyles: {},
+          styles: {
+            backgroundColor: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(0,245,255,0.2)',
+            borderRadius: '20px',
+            padding: '24px',
+            color: '#ffffff',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+          },
+        },
+      ],
+    },
+  ], {
+    backgroundColor: '#06080e',
+    padding: '100px 48px',
+    borderTop: '1px solid rgba(255,255,255,0.05)',
+  });
+
+  const pricingSection = mkSection('Pricing 3D', [
+    heading('Spatial Compute Plans', 2, { textAlign: 'center', color: '#ffffff', marginBottom: '8px' }),
+    para('Scale effortlessly from indie 3D creators to enterprise spatial networks.', { textAlign: 'center', margin: '0 auto 48px', color: 'rgba(255,255,255,0.6)' }),
+    {
+      id: uuid(), type: 'pricing', name: '3D Pricing Grid',
+      locked: false, hidden: false, responsiveStyles: {},
+      styles: { width: '100%', maxWidth: '1000px', margin: '0 auto' },
+      plans: [
+        { name: 'Hobby', price: '$0', period: '/forever', features: ['5 Interactive 3D Scenes', 'WebAudio Engine', 'Community Discord'], buttonText: 'Start Free', highlighted: false },
+        { name: 'Spatial Pro', price: '$49', period: '/month', features: ['Unlimited 3D Models', '4K Texture Streaming', 'Draco Compression', 'Priority Cloud Rendering'], buttonText: 'Upgrade to Pro', highlighted: true },
+        { name: 'Studio', price: '$199', period: '/month', features: ['Dedicated GPU Cluster', 'Custom Shader Pipelines', 'SLA Guarantee', '24/7 Spatial Support'], buttonText: 'Contact Team', highlighted: false },
+      ],
+    },
+  ], {
+    backgroundColor: '#080a10',
+    padding: '100px 48px',
+  });
+
+  const footerSection = mkSection('Footer', [
+    {
+      id: uuid(), type: 'footer', name: '3D Footer', logo: 'CYBER//SPATIAL',
+      tagline: 'The next evolution of the spatial web.',
+      links: [
+        { label: 'GitHub', href: '#' },
+        { label: 'Discord', href: '#' },
+        { label: 'Documentation', href: '#' },
+        { label: 'Privacy', href: '#' },
+      ],
+      copyright: '© 2026 CyberSpatial 3D Studio. All rights reserved.',
+      locked: false, hidden: false,
+      styles: { color: 'rgba(255,255,255,0.6)' },
+      responsiveStyles: {},
+    },
+  ], {
+    backgroundColor: '#040508',
+    padding: '60px 48px',
+    borderTop: '1px solid rgba(0,245,255,0.15)',
+  });
+
+  return [{
+    id: uuid(),
+    name: 'Home',
+    slug: 'home',
+    sections: [heroSection, featuresSection, pricingSection, footerSection],
+    meta: {
+      title: 'CyberSpatial 3D — Real-Time Spatial Web Studio',
+      description: 'Interactive 3D web experience built with WebCraft Studio',
+      keywords: '3D, WebGL, Spatial Web, Spline, Three.js, Cyberpunk',
+    },
+  }];
+};
+
 // ─── Template Registry ────────────────────────────────────────────────────────
 export interface TemplateDefinition {
   id: string;
@@ -400,6 +697,14 @@ export interface TemplateDefinition {
 }
 
 export const TEMPLATES: TemplateDefinition[] = [
+  {
+    id: 'threed',
+    name: '3D Spatial CyberStudio',
+    description: 'Futuristic 3D website with an interactive orbitable 3D hologram canvas, neon glassmorphism cards, and spatial computing layout.',
+    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80',
+    category: '3D & Spatial',
+    build: threeDStudioTemplate,
+  },
   {
     id: 'portfolio',
     name: 'Personal Portfolio',
