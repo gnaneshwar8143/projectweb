@@ -88,6 +88,26 @@ export function createElement(type: ElementType): WebElement {
       return { ...base, type, name: 'Custom HTML', html: '<div style="padding:20px;background:#f1f5f9;border-radius:8px"><p>Custom HTML block</p></div>',
         styles: {} };
 
+    case 'model3d':
+      return {
+        ...base,
+        type,
+        name: '3D Model',
+        src: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        provider: 'model-viewer',
+        autoRotate: true,
+        cameraControls: true,
+        shadowIntensity: 1,
+        alt: 'Interactive 3D Model',
+        styles: {
+          width: '100%',
+          height: '420px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          display: 'block',
+        },
+      };
+
     default:
       return { ...base, type: 'paragraph' as any, name: 'Element', content: 'Element', styles: {} };
   }

@@ -924,6 +924,201 @@ function HtmlPanel({ element, onUpdate }: { element: any; onUpdate: (u: any) => 
   );
 }
 
+const MODEL_PRESETS = [
+  { label: 'Astronaut', url: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb' },
+  { label: 'Damaged Helmet', url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb' },
+  { label: 'Robot Expressive', url: 'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb' },
+  { label: 'Materials Shoe', url: 'https://modelviewer.dev/shared-assets/models/glTF-Sample-Models/2.0/MaterialsVariantsShoe/glTF-Binary/MaterialsVariantsShoe.glb' },
+];
+
+function Model3DPanel({ element, onUpdate }: { element: any; onUpdate: (u: any) => void }) {
+  return (
+    <Collapsible title="3D Model Settings">
+      <Row label="Provider">
+        <Select
+          value={element.provider || 'model-viewer'}
+          onChange={v => onUpdate({ provider: v })}
+          options={[
+            { value: 'model-viewer', label: 'Google 3D (.glb / .gltf)' },
+            { value: 'spline', label: 'Spline 3D Embed' },
+            { value: 'interactive-crystal', label: 'Holographic Crystal (WebGL)' },
+          ]}
+        />
+      </Row>
+
+      {element.provider !== 'interactive-crystal' && (
+        <>
+          <Row label="Model URL">
+            <Input
+              value={element.src || ''}
+              onChange={v => onUpdate({ src: v })}
+              placeholder={element.provider === 'spline' ? 'https://my.spline.design/...' : 'https://.../model.glb'}
+            />
+          </Row>
+
+          {element.provider === 'model-viewer' && (
+            <div className="mb-3">
+              <span className="text-[10px] text-surface-400 font-semibold block mb-1 uppercase tracking-wider">Quick Presets</span>
+              <div className="grid grid-cols-2 gap-1">
+                {MODEL_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => onUpdate({ src: preset.url })}
+                    className="btn-secondary text-[10px] py-1 px-1.5 truncate text-left hover:border-brand-500 hover:text-brand-300"
+                    title={preset.label}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {element.provider === 'model-viewer' && (
+        <>
+          <div className="flex items-center justify-between py-1 mb-2">
+            <span className="text-[11px] text-surface-400">Auto Rotate</span>
+            <input
+              type="checkbox"
+              checked={element.autoRotate ?? true}
+              onChange={e => onUpdate({ autoRotate: e.target.checked })}
+              className="accent-brand-500 rounded"
+            />
+          </div>
+
+          <div className="flex items-center justify-between py-1 mb-2">
+            <span className="text-[11px] text-surface-400">Camera Orbit Controls</span>
+            <input
+              type="checkbox"
+              checked={element.cameraControls ?? true}
+              onChange={e => onUpdate({ cameraControls: e.target.checked })}
+              className="accent-brand-500 rounded"
+            />
+          </div>
+
+          <Row label="Shadow">
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={0}
+                max={2}
+                step={0.1}
+                value={element.shadowIntensity ?? 1}
+                onChange={e => onUpdate({ shadowIntensity: parseFloat(e.target.value) })}
+                className="flex-1 accent-brand-500"
+              />
+              <span className="text-[11px] text-surface-400 w-8 text-right">{element.shadowIntensity ?? 1}</span>
+            </div>
+          </Row>
+        </>
+      )}
+
+      <Row label="Alt Text">
+        <Input
+          value={element.alt || ''}
+          onChange={v => onUpdate({ alt: v })}
+          placeholder="Interactive 3D model"
+        />
+      </Row>
+    </Collapsible>
+  );
+}
+
+function Transforms3DPanel({ styles, onStyle }: { styles: ElementStyles; onStyle: (k: keyof ElementStyles, v: string) => void }) {
+  const rotX = parseFloat(styles.rotateX ?? '0') || 0;
+  const rotY = parseFloat(styles.rotateY ?? '0') || 0;
+  const transZ = parseFloat(styles.translateZ ?? '0') || 0;
+  const persp = parseFloat(styles.perspective ?? '1000') || 1000;
+
+  return (
+    <>
+      <Row label="Perspective">
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={300}
+            max={2000}
+            step={50}
+            value={persp}
+            onChange={e => onStyle('perspective', `${e.target.value}px`)}
+            className="flex-1 accent-brand-500"
+          />
+          <span className="text-[11px] text-surface-400 w-12 text-right">{persp}px</span>
+        </div>
+      </Row>
+      <Row label="Tilt X (Pitch)">
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={-45}
+            max={45}
+            step={1}
+            value={rotX}
+            onChange={e => onStyle('rotateX', `${e.target.value}deg`)}
+            className="flex-1 accent-brand-500"
+          />
+          <span className="text-[11px] text-surface-400 w-12 text-right">{rotX}°</span>
+        </div>
+      </Row>
+      <Row label="Tilt Y (Yaw)">
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={-45}
+            max={45}
+            step={1}
+            value={rotY}
+            onChange={e => onStyle('rotateY', `${e.target.value}deg`)}
+            className="flex-1 accent-brand-500"
+          />
+          <span className="text-[11px] text-surface-400 w-12 text-right">{rotY}°</span>
+        </div>
+      </Row>
+      <Row label="Depth Z">
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={-100}
+            max={200}
+            step={5}
+            value={transZ}
+            onChange={e => onStyle('translateZ', `${e.target.value}px`)}
+            className="flex-1 accent-brand-500"
+          />
+          <span className="text-[11px] text-surface-400 w-12 text-right">{transZ}px</span>
+        </div>
+      </Row>
+      {(rotX !== 0 || rotY !== 0 || transZ !== 0) && (
+        <button
+          type="button"
+          onClick={() => {
+            onStyle('rotateX', '0deg');
+            onStyle('rotateY', '0deg');
+            onStyle('translateZ', '0px');
+          }}
+          className="btn-secondary w-full text-[11px] py-1 mt-1 text-surface-400 hover:text-white"
+        >
+          Reset 3D Transforms
+        </button>
+      )}
+    </>
+  );
+}
+
+function findElementInTree(elements: WebElement[], id: string): WebElement | null {
+  for (const el of elements) {
+    if (el.id === id) return el;
+    if (el.children && el.children.length > 0) {
+      const found = findElementInTree(el.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 function NoSelection() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-5">
@@ -942,7 +1137,7 @@ export function RightPanel() {
 
   const page = project?.pages.find(p => p.id === activePageId);
   const section = page?.sections.find(s => s.id === selectedSectionId);
-  const element = section?.elements.find(e => e.id === selectedElementId);
+  const element = section ? findElementInTree(section.elements, selectedElementId ?? '') : null;
 
   const handleStyleChange = (key: keyof ElementStyles, value: string) => {
     if (!section || !element) return;
@@ -997,10 +1192,14 @@ export function RightPanel() {
             {element.type === 'video'       && <VideoPanel element={element} onUpdate={handleUpdate} />}
             {element.type === 'gallery'     && <GalleryPanel element={element} onUpdate={handleUpdate} />}
             {element.type === 'html'        && <HtmlPanel element={element} onUpdate={handleUpdate} />}
+            {element.type === 'model3d'     && <Model3DPanel element={element} onUpdate={handleUpdate} />}
 
             {/* Style panels — always shown */}
             <Collapsible title="Typography">
               <TypographyPanel styles={element.styles} onStyle={handleStyleChange} />
+            </Collapsible>
+            <Collapsible title="3D Transforms & Tilt" defaultOpen={false}>
+              <Transforms3DPanel styles={element.styles} onStyle={handleStyleChange} />
             </Collapsible>
             <Collapsible title="Size" defaultOpen={false}>
               <SizePanel styles={element.styles} onStyle={handleStyleChange} />

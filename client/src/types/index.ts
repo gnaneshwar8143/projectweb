@@ -15,7 +15,8 @@ export type ElementType =
   | 'testimonial'
   | 'form'
   | 'footer'
-  | 'html';
+  | 'html'
+  | 'model3d';
 
 // ─── Responsive Breakpoints ───────────────────────────────────────────────────
 export type Breakpoint = 'desktop' | 'tablet' | 'mobile';
@@ -98,6 +99,14 @@ export interface ElementStyles {
   bottom?: string;
   left?: string;
   zIndex?: string;
+
+  // 3D Transforms & Depth
+  perspective?: string;
+  rotateX?: string;
+  rotateY?: string;
+  rotateZ?: string;
+  translateZ?: string;
+  transformStyle?: string;
 }
 
 // ─── Base Element ─────────────────────────────────────────────────────────────
@@ -225,12 +234,24 @@ export interface HtmlElement extends BaseElement {
   html: string;
 }
 
+export interface Model3DElement extends BaseElement {
+  type: 'model3d';
+  src: string;
+  provider: 'model-viewer' | 'spline' | 'interactive-crystal';
+  autoRotate: boolean;
+  cameraControls: boolean;
+  shadowIntensity: number;
+  poster?: string;
+  alt: string;
+}
+
 // ─── Union ────────────────────────────────────────────────────────────────────
 export type WebElement =
   | HeadingElement | ParagraphElement | ButtonElement | ImageElement
   | VideoElement | DividerElement | ContainerElement | SpacerElement
   | NavbarElement | GalleryElement | CardElement | PricingElement
-  | TestimonialElement | FormElement | FooterElement | HtmlElement;
+  | TestimonialElement | FormElement | FooterElement | HtmlElement
+  | Model3DElement;
 
 // ─── Section ──────────────────────────────────────────────────────────────────
 export interface Section {

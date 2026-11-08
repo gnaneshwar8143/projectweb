@@ -6,7 +6,166 @@ import { createElement } from './elementFactory';
 // Convert our ElementStyles object to a React CSSProperties object
 // Injects CSS custom property fallbacks for theme-aware values
 export function stylesToCSS(styles: ElementStyles): React.CSSProperties {
-  return styles as React.CSSProperties;
+  const css: React.CSSProperties = { ...styles as React.CSSProperties };
+
+  // Combine 3D transforms if any are set
+  const transforms: string[] = [];
+  if (styles.perspective) transforms.push(`perspective(${styles.perspective})`);
+  if (styles.rotateX) transforms.push(`rotateX(${styles.rotateX})`);
+  if (styles.rotateY) transforms.push(`rotateY(${styles.rotateY})`);
+  if (styles.rotateZ) transforms.push(`rotateZ(${styles.rotateZ})`);
+  if (styles.translateZ) transforms.push(`translateZ(${styles.translateZ})`);
+
+  if (transforms.length > 0) {
+    css.transform = transforms.join(' ');
+  }
+  if (styles.transformStyle) {
+    (css as any).transformStyle = styles.transformStyle;
+  }
+  return css;
+}
+
+function Model3DViewer({ element }: { element: any }) {
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+
+  React.useEffect(() => {
+    if (element.provider !== 'interactive-crystal') return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let width = (canvas.width = canvas.parentElement?.clientWidth || 400);
+    let height = (canvas.height = canvas.parentElement?.clientHeight || 400);
+
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      width = canvas.width = canvas.parentElement.clientWidth || 400;
+      height = canvas.height = canvas.parentElement.clientHeight || 400;
+    };
+    window.addEventListener('resize', onResize);
+
+    const vertices = [
+      { x: 0, y: -130, z: 0 },
+      { x: 90, y: 0, z: 90 },
+      { x: -90, y: 0, z: 90 },
+      { x: -90, y: 0, z: -90 },
+      { x: 90, y: 0, z: -90 },
+      { x: 0, y: 130, z: 0 },
+    ];
+    const faces = [
+      [0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1],
+      [5, 2, 1], [5, 3, 2], [5, 4, 3], [5, 1, 4]
+    ];
+    const faceColors = [
+      'rgba(0, 245, 255, 0.45)',
+      'rgba(168, 85, 247, 0.45)',
+      'rgba(59, 130, 246, 0.45)',
+      'rgba(236, 72, 153, 0.45)',
+      'rgba(16, 185, 129, 0.45)',
+      'rgba(0, 245, 255, 0.35)',
+      'rgba(168, 85, 247, 0.35)',
+      'rgba(236, 72, 153, 0.35)'
+    ];
+
+    let angleX = 0;
+    let angleY = 0;
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+      angleX += 0.008;
+      angleY += 0.012;
+
+      const cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+      const cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+
+      const projected = vertices.map(v => {
+        const y1 = v.y * cosX - v.z * sinX;
+        const z1 = v.y * sinX + v.z * cosX;
+        const x2 = v.x * cosY + z1 * sinY;
+        const z2 = -v.x * sinY + z1 * cosY;
+        const scale = 360 / (360 + z2);
+        return {
+          x: x2 * scale + width / 2,
+          y: y1 * scale + height / 2,
+          z: z2,
+        };
+      });
+
+      const sortedFaces = faces.map((f, idx) => {
+        const avgZ = (projected[f[0]].z + projected[f[1]].z + projected[f[2]].z) / 3;
+        return { indices: f, avgZ, color: faceColors[idx] };
+      }).sort((a, b) => b.avgZ - a.avgZ);
+
+      sortedFaces.forEach(face => {
+        const p1 = projected[face.indices[0]];
+        const p2 = projected[face.indices[1]];
+        const p3 = projected[face.indices[2]];
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.closePath();
+        ctx.fillStyle = face.color;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+
+      animId = requestAnimationFrame(render);
+    };
+
+    render();
+    return () => {
+      window.removeEventListener('resize', onResize);
+      cancelAnimationFrame(animId);
+    };
+  }, [element.provider]);
+
+  if (element.provider === 'interactive-crystal') {
+    return (
+      <div style={{ width: '100%', height: '100%', minHeight: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+        <div style={{ position: 'absolute', bottom: '12px', left: '16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', color: '#00f5ff', border: '1px solid rgba(0,245,255,0.3)', pointerEvents: 'none' }}>
+          Interactive WebGL Crystal
+        </div>
+      </div>
+    );
+  }
+
+  if (element.provider === 'spline') {
+    return (
+      <iframe
+        src={element.src || 'https://my.spline.design/interactivecubes-9b8e8f81014e037be7dc4fb01d22f6d2/'}
+        frameBorder="0"
+        width="100%"
+        height="100%"
+        style={{ width: '100%', height: '100%', minHeight: '400px', border: 'none', display: 'block', borderRadius: 'inherit' }}
+        allow="fullscreen"
+        title={element.alt || 'Spline 3D'}
+      />
+    );
+  }
+
+  // Google <model-viewer> custom element
+  return React.createElement('model-viewer', {
+    src: element.src || 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+    alt: element.alt || '3D Model',
+    'auto-rotate': element.autoRotate ? '' : undefined,
+    'camera-controls': element.cameraControls ? '' : undefined,
+    'shadow-intensity': element.shadowIntensity ?? 1,
+    poster: element.poster,
+    style: {
+      width: '100%',
+      height: '100%',
+      minHeight: '380px',
+      display: 'block',
+      backgroundColor: 'transparent',
+    },
+  });
 }
 
 // Theme-aware style helpers — use CSS vars as defaults when no explicit value given
@@ -151,7 +310,7 @@ export function ElementRenderer({
             <div className="flex flex-col items-center justify-center p-4 border border-dashed border-surface-600/40 rounded-lg text-center bg-surface-800/10 hover:bg-surface-800/20 transition-all w-full min-h-[90px]">
               <p className="text-[11px] text-surface-400 mb-2 font-medium">Empty Column / Container</p>
               <div className="flex flex-wrap items-center justify-center gap-1.5">
-                {(['heading', 'paragraph', 'button', 'image'] as const).map(t => (
+                {(['heading', 'paragraph', 'button', 'image', 'model3d'] as const).map(t => (
                   <button
                     key={t}
                     type="button"
@@ -163,7 +322,7 @@ export function ElementRenderer({
                     }}
                     className="btn-secondary text-[10px] py-0.5 px-2 capitalize flex items-center gap-1 hover:border-brand-500 hover:text-brand-300"
                   >
-                    + {t}
+                    + {t === 'model3d' ? '3D' : t}
                   </button>
                 ))}
               </div>
@@ -332,6 +491,13 @@ export function ElementRenderer({
 
     case 'html':
       return <div {...baseProps} dangerouslySetInnerHTML={{ __html: element.html }} />;
+
+    case 'model3d':
+      return (
+        <div {...baseProps} style={{ ...stylesToCSS(styles), overflow: 'hidden' }}>
+          <Model3DViewer element={element} />
+        </div>
+      );
 
     default:
       return <div {...baseProps}><span style={{ color: '#ef4444', fontSize: '12px' }}>Unknown element</span></div>;

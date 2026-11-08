@@ -241,7 +241,7 @@ function SectionRenderer({
               </p>
               {!isOver && (
                 <div className="flex flex-wrap items-center justify-center gap-1.5">
-                  {(['heading', 'paragraph', 'button', 'image', 'card', 'navbar'] as const).map(type => (
+                  {(['heading', 'paragraph', 'button', 'image', 'model3d', 'card', 'navbar'] as const).map(type => (
                     <button
                       key={type}
                       onClick={(e) => {
@@ -252,7 +252,7 @@ function SectionRenderer({
                       }}
                       className="btn-secondary text-[11px] py-1 px-2.5 capitalize flex items-center gap-1 hover:border-brand-500 hover:text-brand-300"
                     >
-                      <Plus size={10} /> {type}
+                      <Plus size={10} /> {type === 'model3d' ? '3D Model' : type}
                     </button>
                   ))}
                 </div>

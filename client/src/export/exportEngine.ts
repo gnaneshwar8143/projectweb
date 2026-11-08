@@ -4,13 +4,24 @@ import { DEFAULT_THEME, BORDER_RADIUS_MAP } from '../types';
 
 // ─── Style object to CSS string ───────────────────────────────────────────────
 function stylesToString(styles: ElementStyles, indent = '  '): string {
-  return Object.entries(styles)
-    .filter(([, v]) => v !== undefined && v !== '')
+  const transforms: string[] = [];
+  if (styles.perspective) transforms.push(`perspective(${styles.perspective})`);
+  if (styles.rotateX) transforms.push(`rotateX(${styles.rotateX})`);
+  if (styles.rotateY) transforms.push(`rotateY(${styles.rotateY})`);
+  if (styles.rotateZ) transforms.push(`rotateZ(${styles.rotateZ})`);
+  if (styles.translateZ) transforms.push(`translateZ(${styles.translateZ})`);
+
+  const entries = Object.entries(styles)
+    .filter(([k, v]) => v !== undefined && v !== '' && !['perspective', 'rotateX', 'rotateY', 'rotateZ', 'translateZ'].includes(k))
     .map(([k, v]) => {
       const prop = k.replace(/([A-Z])/g, '-$1').toLowerCase();
       return `${indent}${prop}: ${v};`;
-    })
-    .join('\n');
+    });
+
+  if (transforms.length > 0) {
+    entries.push(`${indent}transform: ${transforms.join(' ')};`);
+  }
+  return entries.join('\n');
 }
 
 // ─── Element to HTML ──────────────────────────────────────────────────────────
@@ -98,6 +109,12 @@ ${i}  </div>
 ${i}</footer>`;
     case 'html':
       return `${i}${el.html}`;
+    case 'model3d': {
+      if (el.provider === 'spline') {
+        return `${i}<iframe src="${escapeAttr(el.src)}" frameborder="0" width="100%" height="100%" style="border:none;min-height:420px;${style.replace(/\n/g, ' ')}" allow="fullscreen"></iframe>`;
+      }
+      return `${i}<model-viewer src="${escapeAttr(el.src)}" alt="${escapeAttr(el.alt || '3D Model')}"${el.autoRotate ? ' auto-rotate' : ''}${el.cameraControls ? ' camera-controls' : ''} shadow-intensity="${el.shadowIntensity ?? 1}"${styleAttr}></model-viewer>`;
+    }
     default:
       return '';
   }
@@ -129,6 +146,13 @@ function pageToHtml(page: Page, project: Project): string {
   const allFonts = Array.from(new Set([theme.headingFont, theme.bodyFont, ...project.settings.fonts].filter(Boolean)));
   const fonts = `<link href="https://fonts.googleapis.com/css2?family=${allFonts.map(f => encodeURIComponent(f) + ':wght@300;400;500;600;700;800').join('&family=')}&display=swap" rel="stylesheet">`;
 
+  const has3d = page.sections.some(s =>
+    s.elements.some(e => e.type === 'model3d' || (e.children && e.children.some(c => c.type === 'model3d')))
+  );
+  const modelViewerScript = has3d
+    ? '\n  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>'
+    : '';
+
   const sections = page.sections.map(sectionToHtml).filter(Boolean).join('\n\n');
 
   return `<!DOCTYPE html>
@@ -140,7 +164,7 @@ function pageToHtml(page: Page, project: Project): string {
   <meta name="description" content="${escapeAttr(page.meta.description)}" />
   <meta name="keywords" content="${escapeAttr(page.meta.keywords)}" />
   ${fonts}
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css" />${modelViewerScript}
 </head>
 <body>
 ${sections}
@@ -264,7 +288,17 @@ function stylesToTailwind(styles: ElementStyles): string {
 
 /** Convert ElementStyles to an inline React style object string */
 function stylesToInlineStyle(styles: ElementStyles, extra?: ElementStyles): string {
-  const merged = { ...styles, ...extra };
+  const merged: any = { ...styles, ...extra };
+  const transforms: string[] = [];
+  if (merged.perspective) { transforms.push(`perspective(${merged.perspective})`); delete merged.perspective; }
+  if (merged.rotateX) { transforms.push(`rotateX(${merged.rotateX})`); delete merged.rotateX; }
+  if (merged.rotateY) { transforms.push(`rotateY(${merged.rotateY})`); delete merged.rotateY; }
+  if (merged.rotateZ) { transforms.push(`rotateZ(${merged.rotateZ})`); delete merged.rotateZ; }
+  if (merged.translateZ) { transforms.push(`translateZ(${merged.translateZ})`); delete merged.translateZ; }
+  if (transforms.length > 0) {
+    merged.transform = transforms.join(' ');
+  }
+
   const entries = Object.entries(merged)
     .filter(([, v]) => v !== undefined && v !== '')
     .map(([k, v]) => `  ${k}: '${String(v).replace(/'/g, "\\'")}'`);
@@ -375,6 +409,12 @@ ${i}  </div>
 ${i}</footer>`;
     case 'html':
       return `${i}<div${styleAttr} dangerouslySetInnerHTML={{ __html: \`${el.html.replace(/`/g, '\\`')}\` }} />`;
+    case 'model3d': {
+      if (el.provider === 'spline') {
+        return `${i}<iframe src="${el.src}" frameBorder="0" width="100%" height="100%" style={{ border: 'none', minHeight: '420px' }} allow="fullscreen" />`;
+      }
+      return `${i}<model-viewer src="${el.src}" alt="${el.alt || '3D Model'}"${el.autoRotate ? ' auto-rotate' : ''}${el.cameraControls ? ' camera-controls' : ''} shadow-intensity="${el.shadowIntensity ?? 1}"${styleAttr} />`;
+    }
     default:
       return '';
   }

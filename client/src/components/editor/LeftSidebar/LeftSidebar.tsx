@@ -3,7 +3,7 @@ import {
   Type, Image as ImageIcon, MousePointer, Video, Minus, Layout, Maximize,
   Navigation, Grid, CreditCard, DollarSign, MessageSquare, FileText, Anchor,
   Layers, FileCode, Plus, Trash2, Copy, ChevronRight, Upload,
-  Search, Check, Palette, Sparkles, Columns2, Columns3,
+  Search, Check, Palette, Sparkles, Columns2, Columns3, Box,
 } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useEditorStore } from '../../../store/editorStore';
@@ -52,6 +52,12 @@ const ELEMENT_GROUPS = [
       { type: 'image' as ElementType, label: 'Image', icon: <ImageIcon size={14} /> },
       { type: 'video' as ElementType, label: 'Video', icon: <Video size={14} /> },
       { type: 'gallery' as ElementType, label: 'Gallery', icon: <Grid size={14} /> },
+    ],
+  },
+  {
+    label: '3D & Spatial',
+    items: [
+      { type: 'model3d' as ElementType, label: '3D Model / Scene', icon: <Box size={14} /> },
     ],
   },
   {
